@@ -3,6 +3,7 @@
 #include <array>
 #include <algorithm>
 #include <SFML/Graphics.hpp>
+#include <cmath>
 
 #define FLOAT_INF 13371337.0
 
@@ -24,7 +25,7 @@ struct Vertex {
 // Represents weighted Graph data structure
 class Graph {
     std::vector<Vertex> m_vertexNames{};     // Names of vertecies
-    std::vector<std::vector<Edge>> m_adgMatrix{}; // Adjacency matrix of graph
+    std::vector<std::vector<std::vector<Edge>>> m_adgMatrix{}; // Adjacency matrix of graph
 
 public:
     void pushVertex(Vertex const &v) { // Adds Vertex to the end of the adj. matrix
@@ -34,7 +35,7 @@ public:
             m_adgMatrix[i].push_back({});
         }
 
-        m_adgMatrix.push_back(std::vector<Edge>(m_vertexNames.size(), Edge{}));
+        m_adgMatrix.push_back(std::vector<std::vector<Edge>>(m_vertexNames.size(), std::vector<Edge>()));
     }
 
     void removeVertexByIndex(size_t index) {
@@ -52,8 +53,8 @@ public:
     void insertEdge(size_t v1, size_t v2, Edge const &e) {
         if(v1 >= m_adgMatrix.size() || v2 >= m_adgMatrix.size())
             throw std::runtime_error("Cannot insert edge to non existing verticies");
-        m_adgMatrix[v1][v2] = e;
-        m_adgMatrix[v2][v1] = e;
+        m_adgMatrix[v1][v2].push_back(e);
+        m_adgMatrix[v2][v1].push_back(e);
     }
 
     void deleteEdge(size_t v1, size_t v2) {
@@ -69,26 +70,36 @@ public:
         for (auto &row : m_adgMatrix) {
             std::wcout << m_vertexNames[index++].id << "\t";
             for (auto &edge : row) {
-                std::cout << edge.weight << " ";
+                std::cout << edge[0].weight << " ";
             }
             std::cout << "\n";
         }
     }
 };
 
+float length(sf::Vector2f const &vec) {
+    return std::sqrt(vec.x * vec.x + vec.y * vec.y);
+}
+
+sf::Vector2f norm(sf::Vector2f const &vec) {
+    return {vec.x / length(vec), vec.y / length(vec)};
+}
+
+class Line : sf::Drawable {
+    sf::Vector2f m_p1{};
+    sf::Vector2f m_p2{};
+    float m_thickness{5};
+    sf::ConvexShape m_shape{};
+
+    Line(sf::Vector2f const &p1, sf::Vector2f const &p2, float thickness = 5) : m_p1(p1), m_p2(p2), m_thickness(thickness) {
+        sf::Vector2f normal = norm({-(m_p2.y - m_p1.x), m_p2.x - m_p1.x});
+        
+    }
+};
+
 int main() {
-    Graph g;
-    g.pushVertex({L"first"});
-    g.pushVertex({L"second"});
-    g.pushVertex({L"third"});
-    g.pushVertex({L"fourth"});
+    
+    
 
-    g.removeVertexByIndex(1);
-
-    g.insertEdge(1, 2, {{}, {}, 12});
-
-    g.deleteEdge(1, 2);
-
-    g.printToConsole();
     return 0;
 }

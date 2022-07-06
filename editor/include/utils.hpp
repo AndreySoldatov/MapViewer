@@ -3,6 +3,7 @@
 #include <SFML/Graphics.hpp>
 #include <cmath>
 
+#define PI 3.14159265f
 #define FLOAT_INF 13371337.0
 
 inline float length(sf::Vector2f const &vec) {
@@ -41,4 +42,12 @@ inline float distToLine(sf::Vector2f const &vec, sf::Vector2f const &p1, sf::Vec
     float c = slope * p1.x - p1.y;
 
     return std::abs(a * vec.x + b * vec.y + c) / std::sqrt(a * a + b * b);
+}
+
+inline sf::Vector2f toVec2f(sf::Vector2i const &vec) {
+    return {(float)vec.x, (float)vec.y};
+}
+
+inline sf::Vector2f delta(sf::Vector2f const &vec1, sf::Vector2f const &vec2) {
+    return {vec1.x - vec2.x, vec1.y - vec2.y};
 }

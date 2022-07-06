@@ -3,6 +3,9 @@
 #include <SFML/Graphics.hpp>
 
 #include <utils.hpp>
+#include <json.hpp>
+
+namespace nl = nlohmann;
 
 struct Edge {
     std::wstring id{};
@@ -20,6 +23,8 @@ class Graph {
     std::vector<std::tuple<size_t, size_t, Edge>> m_edges;
 
     size_t m_movingIndex{100000};
+    size_t m_activeVertex{100000};
+    size_t m_activeEdge{100000};
 
 public:
     void pushVertex(Vertex const &v);
@@ -36,13 +41,19 @@ public:
 
     const std::vector<std::tuple<size_t, size_t, Edge>> &getEdges() const;
 
-    void update(sf::RenderWindow const &window);
+    void update(sf::RenderWindow const &window, float scale, sf::Vector2f const &offset);
+
+    void updateInput(sf::Event const &e);
 
     void draw(
         sf::RenderTarget &target, 
         sf::RenderWindow const &window,
         sf::Font const &font, 
-        sf::Color const &prim, 
-        sf::Color const &sec
+        sf::Color const &prim,
+        sf::Color const &sec,
+        float scale,
+        sf::Vector2f const &offset
     ) const;
+
+    nl::json packToJson(float normFactor);
 };

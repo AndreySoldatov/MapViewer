@@ -1,9 +1,10 @@
 #pragma once
 
 #include <SFML/Graphics.hpp>
+#include <RoundRect.hpp>
 
 class InputField : public sf::Drawable {
-    sf::RectangleShape m_padding;
+    RoundRect m_padding;
     sf::Text m_text;
     std::wstring m_defaultString{L"Дефолт"};
     std::wstring m_string{};

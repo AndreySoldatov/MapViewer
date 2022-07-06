@@ -8,9 +8,10 @@ Button::Button(sf::Font const &font, sf::Vector2f const &pos, std::wstring const
     m_text.setString(text);
     m_text.setCharacterSize(30);
     m_text.setFillColor(sf::Color(100, 100, 100));
-    m_text.setPosition({pos.x + 20, pos.y + 12.0f});
+    m_text.setPosition({pos.x + 20, pos.y + 10.0f});
     
     m_padding.setSize({m_text.getGlobalBounds().width + 40, 60});
+    m_padding.setRoundingPercent(40.0f);
     
     m_onClick = onClick;
 }

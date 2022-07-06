@@ -5,23 +5,37 @@
 #include <locale>
 #include <codecvt>
 #include <cwctype>
+#include <fstream>
 
 #include <Line.hpp>
 #include <Graph.hpp>
 #include <InputField.hpp>
 #include <Button.hpp>
 #include <Slider.hpp>
+#include <RoundRect.hpp>
 
 int main()
 {
-    sf::Texture bgImage;
-    bgImage.loadFromFile("map.jpg");
-    bgImage.setSmooth(true);
+    bool lControlPressed{};
 
+    float scale = 1.0;
+    float scaleSpeed{};
+
+    sf::Vector2f offset;
+
+    bool hasImage{};
+    sf::Texture bgImage;
+    hasImage = bgImage.loadFromFile("map.jpg");
+    
     sf::Sprite bgSprite;
-    bgSprite.setTexture(bgImage);
-    bgSprite.scale({1080.0f / bgImage.getSize().y, 1080.0f / bgImage.getSize().y});
-    bgSprite.setColor({255, 255, 255, 100});
+    float bgImageScale{1080.0f / bgImage.getSize().y};
+
+    if(hasImage) {
+        bgImage.setSmooth(true);
+        bgSprite.setTexture(bgImage);
+        bgSprite.setScale({bgImageScale, bgImageScale});
+        bgSprite.setColor({255, 255, 255, 100});
+    }
 
     sf::ContextSettings settings;
     settings.antialiasingLevel = 4;
@@ -37,9 +51,9 @@ int main()
     g.pushVertex({L"Балмора", {200, 400}});
     g.pushVertex({L"Кальдера", {600, 200}});
 
-    g.insertEdge(0, 1, {L"", {255, 20, 20}, 20});
-    g.insertEdge(1, 2, {L"", {255, 200, 0}, 10});
-    g.insertEdge(2, 0, {L"", {0, 20, 255}, 5});
+    g.insertEdge(0, 1, {L"Гильдия Магов", {255, 20, 20}, 20});
+    g.insertEdge(1, 2, {L"Силт-Страйдер", {255, 200, 0}, 10});
+    g.insertEdge(2, 0, {L"Лодка", {0, 20, 255}, 5});
 
     sf::RectangleShape rect;
     rect.setFillColor(sf::Color::White);
@@ -48,10 +62,15 @@ int main()
     rect.setOutlineColor({200, 200, 200});
     rect.setOutlineThickness(1);
 
+    sf::RectangleShape lineBorder;
+    lineBorder.setSize({600, 1});
+    lineBorder.setPosition({1320, 290});
+    lineBorder.setFillColor(sf::Color(200, 200, 200));
+
     InputField vertexInput(font, {1400, 100}, L"Имя вершины");
     Button vertexButton(font, {1400, 200}, L"Добавить", [&]() {
         if(!vertexInput.getString().empty()) {
-            g.pushVertex({vertexInput.getString(), {100, 900}});
+            g.pushVertex({vertexInput.getString(), mult({100, 900}, 1.0f / scale)});
         }
     });
     sf::Text vertexText;
@@ -105,7 +124,7 @@ int main()
                 }
             }
 
-            if(vertexIndex1 < g.getVertecies().size() && vertexIndex2 < g.getVertecies().size()) {
+            if(vertexIndex1 < g.getVertecies().size() && vertexIndex2 < g.getVertecies().size() && vertexIndex1 != vertexIndex2) {
                 g.insertEdge(
                     vertexIndex1,
                     vertexIndex2,
@@ -123,16 +142,28 @@ int main()
     Slider greenSlider({1400, 680});
     Slider blueSlider({1400, 730});
 
-    sf::RectangleShape colorRect;
+    RoundRect colorRect;
     colorRect.setPosition({1770, 630});
     colorRect.setSize({100, 100});
     colorRect.setOutlineColor(sf::Color(230, 230, 230));
     colorRect.setOutlineThickness(6);
+    colorRect.setRoundingPercent(40);
 
     sf::Clock cl;
 
+    sf::Clock deltaClock;
+    float dt;
+
+    sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+    sf::Vector2i oldPos;
+
     while (window.isOpen())
     {
+        oldPos = mousePos;
+        mousePos = sf::Mouse::getPosition(window);
+
+        dt = deltaClock.restart().asSeconds();
+
         sf::Event event;
         while (window.pollEvent(event))
         {
@@ -143,6 +174,32 @@ int main()
                 window.close();
             }
 
+            if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::LControl) {
+                lControlPressed = true;
+            }
+            if(event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::LControl) {
+                lControlPressed = false;
+            }
+
+            if(lControlPressed && event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::S) {
+                nl::json resJson;
+                // if(hasImage) {
+                //     std::ifstream imageFile("map.jpg", std::ios::binary);
+                //     std::vector<unsigned char> buffer(std::istreambuf_iterator<char>(imageFile), {});
+                //     resJson["image"] = nl::json::binary_t(buffer);
+                // }
+                resJson["graph"] = g.packToJson(1080.0);
+                std::ofstream os("map.json", std::ios::trunc);
+                os << std::setw(2) << resJson;
+            }
+
+            if(lControlPressed && event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::D) {
+                std::cout << "scale: " << scale << "\n";
+                std::cout << "offset: " << offset.x << ", " << offset.y << "\n";
+            }
+
+            g.updateInput(event);
+
             vertexInput.update(event, window);
             vertexButton.update(event, window);
 
@@ -152,9 +209,26 @@ int main()
             edgeNameInput.update(event, window);
             edgeWeightInput.update(event, window);
             edgeButton.update(event, window);
+
+            if(event.mouseWheelScroll.delta > 0 && scale < 6)
+                scaleSpeed += std::min(event.mouseWheelScroll.delta, 10.0f) * dt * scale * 0.2;
+            else if(event.mouseWheelScroll.delta < 0 && scale > 1.0)
+                scaleSpeed += event.mouseWheelScroll.delta * dt * scale * 0.2;
         }
 
-        g.update(window);
+        if(sf::Mouse::isButtonPressed(sf::Mouse::Middle)) {
+            offset += delta(toVec2f(mousePos), toVec2f(oldPos));
+        }
+
+        scale += scaleSpeed;
+        scaleSpeed *= (1.0f - 8.0 * dt);
+
+        if(hasImage) {
+            bgSprite.setScale({bgImageScale * scale, bgImageScale * scale});
+            bgSprite.setPosition(offset);
+        }
+
+        g.update(window, scale, offset);
 
         redSlider.update(window);
         greenSlider.update(window);
@@ -170,9 +244,13 @@ int main()
 
         window.clear(sf::Color::White);
 
-        window.draw(bgSprite);
+        if(hasImage) {
+            window.draw(bgSprite);
+        }
+        g.draw(window, window, font, sf::Color::White, {100, 100, 100}, scale, offset);
 
         window.draw(rect);
+        window.draw(lineBorder);
         window.draw(vertexText);
         window.draw(vertexInput);
         window.draw(vertexButton);
@@ -191,7 +269,6 @@ int main()
         window.draw(blueSlider);
         window.draw(colorRect);
 
-        g.draw(window, window, font, sf::Color::White, {100, 100, 100});
         window.display();
     }
 

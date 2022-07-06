@@ -1,10 +1,11 @@
 #pragma once
 
+#include <RoundRect.hpp>
 #include <SFML/Graphics.hpp>
 #include <functional>
 
 class Button : public sf::Drawable {
-    sf::RectangleShape m_padding;
+    RoundRect m_padding;
     sf::Text m_text;
 
     std::function<void(void)> m_onClick;

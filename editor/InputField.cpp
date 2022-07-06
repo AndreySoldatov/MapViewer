@@ -4,12 +4,13 @@ InputField::InputField(sf::Font const &font, sf::Vector2f pos, std::wstring cons
     m_padding.setSize({400, 60});
     m_padding.setPosition(pos);
     m_padding.setFillColor(sf::Color(200, 200, 200));
+    m_padding.setRoundingPercent(40.0f);
 
     m_text.setFont(font);
     m_text.setString(defstr);
     m_text.setCharacterSize(30);
     m_text.setFillColor(sf::Color(100, 100, 100));
-    m_text.setPosition({pos.x + 20, pos.y + 12});
+    m_text.setPosition({pos.x + 20, pos.y + 10});
 
     m_defaultString = defstr;
 }
@@ -35,7 +36,7 @@ void InputField::update(sf::Event const &e, sf::RenderWindow const &window) {
     }
 
     if(m_active && e.type == sf::Event::TextEntered) {
-        if(e.text.unicode >= 0x30 && m_text.getGlobalBounds().width < m_padding.getSize().x - 60) {
+        if(e.text.unicode >= 0x20 && m_text.getGlobalBounds().width < m_padding.getSize().x - 60) {
             m_string += e.text.unicode;
         }
         if(e.text.unicode == 8 && !m_string.empty()) {

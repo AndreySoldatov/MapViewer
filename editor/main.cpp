@@ -154,6 +154,20 @@ int main()
     sf::Clock deltaClock;
     float dt;
 
+    RoundRect sliderX;
+    sliderX.setPosition({0, 1040});
+    sliderX.setSize({1280, 40});
+    sliderX.setFillColor(sf::Color(230, 230, 230));
+    sliderX.setRoundingPercent(100.0f);
+
+    RoundRect sliderY;
+    sliderY.setPosition({1280, 0});
+    sliderY.setSize({40, 1040});
+    sliderY.setFillColor(sf::Color{230, 230, 230});
+    sliderY.setRoundingPercent(100.0f);
+
+    sf::Vector2f sliderOffsetSpped{};
+
     sf::Vector2i mousePos = sf::Mouse::getPosition(window);
     sf::Vector2i oldPos;
 
@@ -198,7 +212,7 @@ int main()
                 std::cout << "offset: " << offset.x << ", " << offset.y << "\n";
             }
 
-            g.updateInput(event);
+            g.updateInput(event, lControlPressed);
 
             vertexInput.update(event, window);
             vertexButton.update(event, window);
@@ -220,6 +234,18 @@ int main()
             offset += delta(toVec2f(mousePos), toVec2f(oldPos));
         }
 
+        if(sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
+            if(mousePos.x <= sliderX.getSize().x && mousePos.y >= sliderX.getPosition().y) {
+                sliderOffsetSpped.x -= delta(toVec2f(mousePos), toVec2f(oldPos)).x * dt * 8.0f;
+            }
+            if(mousePos.y <= sliderY.getSize().y && mousePos.x >= sliderY.getPosition().x && mousePos.x <= sliderY.getPosition().x + sliderY.getSize().x) {
+                sliderOffsetSpped.y -= delta(toVec2f(mousePos), toVec2f(oldPos)).y * dt * 8.0f;
+            }
+        }
+
+        sliderOffsetSpped = mult(sliderOffsetSpped, 1.0f - 8.0 * dt);
+        offset += sliderOffsetSpped;
+
         scale += scaleSpeed;
         scaleSpeed *= (1.0f - 8.0 * dt);
 
@@ -228,7 +254,7 @@ int main()
             bgSprite.setPosition(offset);
         }
 
-        g.update(window, scale, offset);
+        g.update(window, scale, offset, ((hasImage) ? sf::Vector2f{bgImage.getSize().x * bgImageScale, bgImage.getSize().y * bgImageScale} : sf::Vector2f{1320, 1080}));
 
         redSlider.update(window);
         greenSlider.update(window);
@@ -248,6 +274,9 @@ int main()
             window.draw(bgSprite);
         }
         g.draw(window, window, font, sf::Color::White, {100, 100, 100}, scale, offset);
+
+        window.draw(sliderX);
+        window.draw(sliderY);
 
         window.draw(rect);
         window.draw(lineBorder);

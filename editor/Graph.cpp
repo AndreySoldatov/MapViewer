@@ -60,7 +60,7 @@ const std::vector<std::tuple<size_t, size_t, Edge>> &Graph::getEdges() const {
     return m_edges;
 }
 
-void Graph::updateInput(sf::Event const &e) {
+void Graph::updateInput(sf::Event const &e, bool lCtrlPressed) {
     if(e.type == sf::Event::TextEntered) {
         if(m_activeVertex < m_vertecies.size()) {
             if(e.text.unicode >= 0x20) {
@@ -80,15 +80,15 @@ void Graph::updateInput(sf::Event const &e) {
     }
     if(m_activeEdge < m_edges.size()) {
         if(e.type == sf::Event::KeyPressed && e.key.code == sf::Keyboard::Up) {
-            std::get<2>(m_edges[m_activeEdge]).weight += 1.0f;
+            std::get<2>(m_edges[m_activeEdge]).weight += ((lCtrlPressed) ? .1f : 1.0f);
         }
         else if(e.type == sf::Event::KeyPressed && e.key.code == sf::Keyboard::Down) {
-            std::get<2>(m_edges[m_activeEdge]).weight = std::max(std::get<2>(m_edges[m_activeEdge]).weight - 1.0f, 0.0f);
+            std::get<2>(m_edges[m_activeEdge]).weight = std::max(std::get<2>(m_edges[m_activeEdge]).weight - ((lCtrlPressed) ? .1f : 1.0f), 0.0f);
         }
     }
 }
 
-void Graph::update(sf::RenderWindow const &window, float scale, sf::Vector2f const &offset) {
+void Graph::update(sf::RenderWindow const &window, float scale, sf::Vector2f const &offset, sf::Vector2f const &bound) {
     sf::Vector2f mousePos = sub(mult({(float)sf::Mouse::getPosition(window).x, (float)sf::Mouse::getPosition(window).y}, 1.0f / scale), mult(offset, 1.0f / scale));
 
     size_t index{};
@@ -119,7 +119,12 @@ void Graph::update(sf::RenderWindow const &window, float scale, sf::Vector2f con
         if( 
             sf::Mouse::isButtonPressed(sf::Mouse::Left)
         ) {
-            m_vertecies[m_movingIndex].pos = mousePos;
+            if(mousePos.x >= 0 && mousePos.x <= bound.x) {
+                m_vertecies[m_movingIndex].pos.x = mousePos.x;
+            }
+            if(mousePos.y >= 0 && mousePos.y <= bound.y) {
+                m_vertecies[m_movingIndex].pos.y = mousePos.y;
+            }
         } else {
             m_movingIndex = 1000000;
         }

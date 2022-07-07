@@ -41,9 +41,9 @@ public:
 
     const std::vector<std::tuple<size_t, size_t, Edge>> &getEdges() const;
 
-    void update(sf::RenderWindow const &window, float scale, sf::Vector2f const &offset);
+    void update(sf::RenderWindow const &window, float scale, sf::Vector2f const &offset, sf::Vector2f const &bound);
 
-    void updateInput(sf::Event const &e);
+    void updateInput(sf::Event const &e, bool lCtrlPressed);
 
     void draw(
         sf::RenderTarget &target, 

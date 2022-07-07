@@ -66,16 +66,24 @@ void Graph::updateInput(sf::Event const &e) {
             if(e.text.unicode >= 0x20) {
                 m_vertecies[m_activeVertex].id += e.text.unicode;
             }
-            if(e.text.unicode == 8 && m_vertecies[m_activeVertex].id.length() >= 2) {
+            if(e.text.unicode == 8 && m_vertecies[m_activeVertex].id.length() > 0) {
                 m_vertecies[m_activeVertex].id.erase(m_vertecies[m_activeVertex].id.end() - 1);
             }
         } else if(m_activeEdge < m_vertecies.size()) {
             if(e.text.unicode >= 0x20) {
                 std::get<2>(m_edges[m_activeEdge]).id += e.text.unicode;
             }
-            if(e.text.unicode == 8 && std::get<2>(m_edges[m_activeEdge]).id.length() >= 2) {
+            if(e.text.unicode == 8 && std::get<2>(m_edges[m_activeEdge]).id.length() > 0) {
                 std::get<2>(m_edges[m_activeEdge]).id.erase(std::get<2>(m_edges[m_activeEdge]).id.end() - 1);
             }
+        }
+    }
+    if(m_activeEdge < m_edges.size()) {
+        if(e.type == sf::Event::KeyPressed && e.key.code == sf::Keyboard::Up) {
+            std::get<2>(m_edges[m_activeEdge]).weight += 1.0f;
+        }
+        else if(e.type == sf::Event::KeyPressed && e.key.code == sf::Keyboard::Down) {
+            std::get<2>(m_edges[m_activeEdge]).weight = std::max(std::get<2>(m_edges[m_activeEdge]).weight - 1.0f, 0.0f);
         }
     }
 }

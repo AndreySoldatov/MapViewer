@@ -4,7 +4,7 @@
 #include <sstream>
 #include <locale>
 #include <codecvt>
-#include <cwctype>
+#include <cwctype> // std::tolower();
 #include <fstream>
 
 #include <Line.hpp>

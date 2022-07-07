@@ -3,7 +3,7 @@
 #include <SFML/Graphics.hpp>
 
 #include <utils.hpp>
-#include <json.hpp>
+#include <json.hpp> // https://github.com/nlohmann/json
 
 namespace nl = nlohmann;
 

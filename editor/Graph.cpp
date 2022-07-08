@@ -345,3 +345,25 @@ nl::json Graph::packToJson(float normFactor) {
     
     return js;
 }
+
+void Graph::loadFromJson(nl::json const &js, float normFactor) {
+    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+
+    for (auto &vert : js["vert"])
+    {
+        pushVertex({converter.from_bytes(vert["id"]), mult({vert["pos"]["x"], vert["pos"]["y"]}, normFactor)});
+        //std::wcout << converter.from_bytes(vert["id"]) << "\n";
+    }
+    for (auto &edge : js["edge"])
+    {
+        insertEdge(
+            edge["vert"]["v1"],
+            edge["vert"]["v2"],
+            {
+                converter.from_bytes(edge["info"]["id"]), 
+                {edge["info"]["color"][0], edge["info"]["color"][1], edge["info"]["color"][2]},
+                edge["info"]["weight"]
+            }
+        );
+    }
+}

@@ -25,7 +25,33 @@ int main()
 
     bool hasImage{};
     sf::Texture bgImage;
-    hasImage = bgImage.loadFromFile("map.jpg");
+
+    Graph g;
+
+    std::string move{};
+    std::cin >> move;
+
+    if(move == "new") {
+        hasImage = bgImage.loadFromFile("map.jpg");
+
+        g.pushVertex({L"Альдрун", {100, 100}});
+        g.pushVertex({L"Балмора", {200, 400}});
+        g.pushVertex({L"Кальдера", {600, 200}});
+
+        g.insertEdge(0, 1, {L"Гильдия Магов", {255, 20, 20}, 20});
+        g.insertEdge(1, 2, {L"Силт-Страйдер", {255, 200, 0}, 10});
+        g.insertEdge(2, 0, {L"Лодка", {0, 20, 255}, 5});
+    } else if(move == "load") {
+        std::ifstream is("map.json");
+        nl::json js;
+        is >> js;
+
+        g.loadFromJson(js["graph"], 1080.0f);
+
+        auto buf = js["image"]["bytes"].get<std::vector<unsigned char>>();
+
+        hasImage = bgImage.loadFromMemory(buf.data(), buf.size());
+    }
     
     sf::Sprite bgSprite;
     float bgImageScale{1080.0f / bgImage.getSize().y};
@@ -45,15 +71,6 @@ int main()
 
     sf::Font font;
     if(!font.loadFromFile("font.ttf")) return 1;
-    
-    Graph g;
-    g.pushVertex({L"Альдрун", {100, 100}});
-    g.pushVertex({L"Балмора", {200, 400}});
-    g.pushVertex({L"Кальдера", {600, 200}});
-
-    g.insertEdge(0, 1, {L"Гильдия Магов", {255, 20, 20}, 20});
-    g.insertEdge(1, 2, {L"Силт-Страйдер", {255, 200, 0}, 10});
-    g.insertEdge(2, 0, {L"Лодка", {0, 20, 255}, 5});
 
     sf::RectangleShape rect;
     rect.setFillColor(sf::Color::White);
@@ -155,14 +172,14 @@ int main()
     float dt;
 
     RoundRect sliderX;
-    sliderX.setPosition({0, 1040});
-    sliderX.setSize({1280, 40});
+    sliderX.setPosition({10, 1050});
+    sliderX.setSize({1270, 20});
     sliderX.setFillColor(sf::Color(230, 230, 230));
     sliderX.setRoundingPercent(100.0f);
 
     RoundRect sliderY;
-    sliderY.setPosition({1280, 0});
-    sliderY.setSize({40, 1040});
+    sliderY.setPosition({1290, 10});
+    sliderY.setSize({20, 1030});
     sliderY.setFillColor(sf::Color{230, 230, 230});
     sliderY.setRoundingPercent(100.0f);
 
@@ -197,11 +214,11 @@ int main()
 
             if(lControlPressed && event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::S) {
                 nl::json resJson;
-                // if(hasImage) {
-                //     std::ifstream imageFile("map.jpg", std::ios::binary);
-                //     std::vector<unsigned char> buffer(std::istreambuf_iterator<char>(imageFile), {});
-                //     resJson["image"] = nl::json::binary_t(buffer);
-                // }
+                if(hasImage) {
+                    std::ifstream imageFile("map.jpg", std::ios::binary);
+                    std::vector<unsigned char> buffer(std::istreambuf_iterator<char>(imageFile), {});
+                    resJson["image"] = nl::json::binary_t(buffer);
+                }
                 resJson["graph"] = g.packToJson(1080.0);
                 std::ofstream os("map.json", std::ios::trunc);
                 os << std::setw(2) << resJson;

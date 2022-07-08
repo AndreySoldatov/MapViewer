@@ -56,4 +56,5 @@ public:
     ) const;
 
     nl::json packToJson(float normFactor);
+    void loadFromJson(nl::json const &js, float normFactor);
 };

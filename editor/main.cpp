@@ -13,10 +13,69 @@
 #include <Button.hpp>
 #include <Slider.hpp>
 #include <RoundRect.hpp>
+#include <FileExplorer.hpp>
 
-int main()
-{
+// TODO third case for move
+// TODO
+
+int main([[maybe_unused]]int argc, char** argv) {
+    sf::Font font;
+    if(!font.loadFromFile("font.ttf")) return 1;
+
+    std::wstring filePath;
+
+    sf::ContextSettings settings;
+    settings.antialiasingLevel = 4;
+
+    sf::RenderWindow greetWindow(sf::VideoMode(900, 600), "", sf::Style::None, settings);
+    greetWindow.setFramerateLimit(60);
+
+    FileExplorer fe(argv[0], font, {});
+
+    Button newButton(font, {650, 50}, L"Создать", [&]() {
+        filePath = L"";
+        greetWindow.close();
+    });
+
+    Button openButton(font, {650, 150}, L"Открыть", [&]() {
+        filePath = fe.getActivePath();
+        greetWindow.close();
+    });
+
+    sf::Clock gcl;
+
+    while (greetWindow.isOpen())
+    {
+        float dt = gcl.restart().asSeconds();
+
+        sf::Event event;
+        while (greetWindow.pollEvent(event))
+        {
+            if (
+                event.type == sf::Event::Closed || 
+                (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape)
+            ) {
+                greetWindow.close();
+                return 0;
+            }
+
+            fe.updateInput(event, dt);
+
+            newButton.update(event, greetWindow);
+            openButton.update(event, greetWindow);
+        }
+
+        fe.update(dt);
+
+        greetWindow.clear(sf::Color::White);
+        greetWindow.draw(fe);
+        greetWindow.draw(newButton);
+        greetWindow.draw(openButton);
+        greetWindow.display();
+    }
+
     bool lControlPressed{};
+    bool isMoving{};
 
     float scale = 1.0;
     float scaleSpeed{};
@@ -28,10 +87,7 @@ int main()
 
     Graph g;
 
-    std::string move{};
-    std::cin >> move;
-
-    if(move == "new") {
+    if(filePath.empty()) {
         hasImage = bgImage.loadFromFile("map.jpg");
 
         g.pushVertex({L"Альдрун", {100, 100}});
@@ -41,10 +97,15 @@ int main()
         g.insertEdge(0, 1, {L"Гильдия Магов", {255, 20, 20}, 20});
         g.insertEdge(1, 2, {L"Силт-Страйдер", {255, 200, 0}, 10});
         g.insertEdge(2, 0, {L"Лодка", {0, 20, 255}, 5});
-    } else if(move == "load") {
-        std::ifstream is("map.json");
+    } else {
         nl::json js;
-        is >> js;
+        try {
+            std::ifstream is(filePath.c_str());
+            is >> js;
+        } catch (nl::json::parse_error const &e) {
+            std::cout << e.what();
+            return 1;
+        }
 
         g.loadFromJson(js["graph"], 1080.0f);
 
@@ -63,14 +124,8 @@ int main()
         bgSprite.setColor({255, 255, 255, 100});
     }
 
-    sf::ContextSettings settings;
-    settings.antialiasingLevel = 4;
-
     sf::RenderWindow window(sf::VideoMode(1920, 1080), "", sf::Style::Fullscreen, settings);
     window.setFramerateLimit(60);
-
-    sf::Font font;
-    if(!font.loadFromFile("font.ttf")) return 1;
 
     sf::RectangleShape rect;
     rect.setFillColor(sf::Color::White);
@@ -251,12 +306,15 @@ int main()
             offset += delta(toVec2f(mousePos), toVec2f(oldPos));
         }
 
+        isMoving = false;
         if(sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
             if(mousePos.x <= sliderX.getSize().x && mousePos.y >= sliderX.getPosition().y) {
                 sliderOffsetSpped.x -= delta(toVec2f(mousePos), toVec2f(oldPos)).x * dt * 8.0f;
+                isMoving = true;
             }
             if(mousePos.y <= sliderY.getSize().y && mousePos.x >= sliderY.getPosition().x && mousePos.x <= sliderY.getPosition().x + sliderY.getSize().x) {
                 sliderOffsetSpped.y -= delta(toVec2f(mousePos), toVec2f(oldPos)).y * dt * 8.0f;
+                isMoving = true;
             }
         }
 
@@ -271,7 +329,9 @@ int main()
             bgSprite.setPosition(offset);
         }
 
-        g.update(window, scale, offset, ((hasImage) ? sf::Vector2f{bgImage.getSize().x * bgImageScale, bgImage.getSize().y * bgImageScale} : sf::Vector2f{1320, 1080}));
+        if(!isMoving) {
+            g.update(window, scale, offset, ((hasImage) ? sf::Vector2f{bgImage.getSize().x * bgImageScale, bgImage.getSize().y * bgImageScale} : sf::Vector2f{1320, 1080}));
+        }
 
         redSlider.update(window);
         greenSlider.update(window);

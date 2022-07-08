@@ -1,6 +1,6 @@
 g++ ^
--Wall -Wextra -Werror ^
-main.cpp Line.cpp Graph.cpp InputField.cpp Button.cpp Slider.cpp RoundRect.cpp ^
+-Wall -Wextra -Werror -std=c++17 ^
+main.cpp Line.cpp Graph.cpp InputField.cpp Button.cpp Slider.cpp RoundRect.cpp FileExplorer.cpp ^
 -o ^
 res ^
 -Iinclude ^
